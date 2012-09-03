@@ -12,20 +12,22 @@ const int pinSound2 = 5;
 const int pinCrank = 6;
 const int pinLidOpenValve = 7;
 const int pinLidCloseValve = 8;
-const int pinHeadRaiseValve = 9;
-const int pinHeadLowerValve = 10;
-const int pinTrigger = 0;
-const int pinLidPosition = 1;
-const int pinHeadPosition = 2;
+const int pinHeadRaiseValve = 10;
+const int pinHeadLowerValve = 9;
+const int pinTrigger = 3;
+const int pinLidClosed = 2;
+const int pinLidOpen = 1;
+const int pinHeadDown = 0;
+const int pinHeadUp = 0;
 
 // Analog ranges for position sensors.  
 // Zero = no position reading - not near mag reed
 // Important! Precision must be less than half of difference between high and low thresholds.
-const int AnalogHeadDown = 200;
-const int AnalogHeadUp = 50;
-const int AnalogHeadPrecision = 25;
-const int AnalogLidOpen = 200;
-const int AnalogLidClosed = 50;
+const int AnalogHeadDown = 732;
+const int AnalogHeadUp = 696;
+const int AnalogHeadPrecision = 10;
+const int AnalogLidOpen = 608;
+const int AnalogLidClosed = 656;
 const int AnalogLidPrecision = 20;
 
 // Status values
@@ -46,27 +48,49 @@ const int lidclosed = 130;
 
 // Misc.
 int state;
-const int diag = 0; //change to 1 to output state to serial with each change
+const int diag = 1; //change to 1 to output state to serial with each change
 const int ELKms = 200; // ELK-120 only needs a momentary contact
 
 void setup()
 {
-  if(diag == 1){Serial.begin(9600);}
   SetupProp();
+  
+  if(diag == 1)
+  {
+    Serial.begin(9600);
+    TestRelays();
+  }
+  else
+  {
+    RecoverProp();
+  }
 }
 
 void loop()
 {
-  CheckTrigger();
-  if(state == triggered){PlayMusic();}
-  if(state == musicfinished){OpenLid();}
-  if(state == lidopen){RaiseHead();}
-  if(state == headraised){StartLaugh();}
-  if(state == laughingfinished){LowerHead();}
-  if(state == headlowered){CloseLid();}
-  
-  // don't go back to idle state until trigger turned off, otherwise will loop continuously.
-  if(state == lidclosed && analogRead(pinTrigger) == 0){ChangeStatus(idle);}
+
+  if(diag == 1)
+  {
+    Serial.print("A0: ");Serial.print(analogRead(0));
+    Serial.print(" A1: ");Serial.print(analogRead(1));
+    Serial.print(" A2: ");Serial.print(analogRead(2));
+    Serial.print(" A3: ");Serial.println(analogRead(3));
+    delay(2000);
+  }
+  else
+  {
+    CheckTrigger();
+    if(state == triggered){PlayMusic();}
+    if(state == musicfinished){OpenLid();}
+    if(state == lidopen){RaiseHead();}
+    if(state == headraised){StartLaugh();}
+    if(state == laughingfinished){LowerHead();}
+    if(state == headlowered){CloseLid();}
+    
+    // don't go back to idle state until trigger turned off, otherwise will loop continuously.
+    if(state == lidclosed && analogRead(pinTrigger) == 0){ChangeStatus(idle);}
+        
+  }
   
 }
 
@@ -112,7 +136,7 @@ void LowerHead()
   ChangeStatus(headlowering);
   digitalWrite(pinHeadRaiseValve, LOW); 
   digitalWrite(pinHeadLowerValve, HIGH); 
-  while(analogRead(pinHeadPosition) > AnalogHeadDown + AnalogHeadPrecision || analogRead(pinHeadPosition) < AnalogHeadDown - AnalogHeadPrecision){delay(10);} 
+  while(analogRead(pinHeadDown) > AnalogHeadDown + AnalogHeadPrecision || analogRead(pinHeadDown) < AnalogHeadDown - AnalogHeadPrecision){delay(10);} 
   digitalWrite(pinHeadLowerValve, LOW); 
   ChangeStatus(headlowered);
 }
@@ -121,7 +145,7 @@ void RaiseHead()
 {
   ChangeStatus(headrising);
   digitalWrite(pinHeadRaiseValve, HIGH); 
-  while(analogRead(pinHeadPosition) > AnalogHeadUp + AnalogHeadPrecision || analogRead(pinHeadPosition) < AnalogHeadUp - AnalogHeadPrecision){delay(10);}
+  while(analogRead(pinHeadUp) > AnalogHeadUp + AnalogHeadPrecision || analogRead(pinHeadUp) < AnalogHeadUp - AnalogHeadPrecision){delay(10);}
   ChangeStatus(headraised);
 }
 
@@ -130,7 +154,7 @@ void CloseLid()
   ChangeStatus(lidclosing);
   digitalWrite(pinLidOpenValve, LOW);
   digitalWrite(pinLidCloseValve, HIGH);
-  while(analogRead(pinLidPosition) > AnalogLidClosed + AnalogLidPrecision || analogRead(pinLidPosition) < AnalogLidClosed - AnalogLidPrecision){delay(10);}
+  while(analogRead(pinLidClosed) > AnalogLidClosed + AnalogLidPrecision || analogRead(pinLidClosed) < AnalogLidClosed - AnalogLidPrecision){delay(10);}
   digitalWrite(pinLidCloseValve, LOW);
   
   delay(5000); // delay for tank recharging before next trigger
@@ -142,7 +166,7 @@ void OpenLid()
 {
   ChangeStatus(lidopening);
   digitalWrite(pinLidOpenValve, HIGH);
-  while(analogRead(pinLidPosition) > AnalogLidOpen + AnalogLidPrecision || analogRead(pinLidPosition) < AnalogLidOpen - AnalogLidPrecision){delay(10);}
+  while(analogRead(pinLidOpen) > AnalogLidOpen + AnalogLidPrecision || analogRead(pinLidOpen) < AnalogLidOpen - AnalogLidPrecision){delay(10);}
   ChangeStatus(lidopen);
 }
 
@@ -162,13 +186,13 @@ void PlayMusic()
 
 void CheckTrigger()
 {
-   if(state == idle && analogRead(pinTrigger) > 128){ChangeStatus(triggered);} 
+   if(state == idle && diag == 0 && analogRead(pinTrigger) > 128){ChangeStatus(triggered);} 
 }
 
 void ChangeStatus(int newstatus)
 {
   state = newstatus;
-  if(diag == 1){Serial.println("State changed to " + char(state)); } 
+  if(diag == 1){Serial.print("State changed to ");Serial.println(state);} 
 }
 
 void SetupProp()
@@ -187,11 +211,14 @@ void SetupProp()
   digitalWrite(pinCrank, LOW);
   digitalWrite(pinSound1, LOW);
   digitalWrite(pinSound2, LOW);
-    
+}
+
+void RecoverProp()
+{
   // recovery procedure if power failed, check current positions and initiate closure
   // if head is not all the way down, open lid and set status to laughingfinished
   
-  if(analogRead(pinHeadPosition)>0)
+  if (analogRead(pinHeadDown) > AnalogHeadDown + AnalogHeadPrecision || analogRead(pinHeadDown) < AnalogHeadDown - AnalogHeadPrecision)
   {
     OpenLid();
     ChangeStatus(laughingfinished);
@@ -207,3 +234,13 @@ void SetupProp()
 }
 
 
+void TestRelays()
+{
+  //digitalWrite(pinSound1, HIGH);delay(2000);digitalWrite(pinSound1,LOW);delay(2000);
+  //digitalWrite(pinSound2, HIGH);delay(2000);digitalWrite(pinSound2,LOW);delay(2000);
+  //digitalWrite(pinCrank, HIGH);delay(2000);digitalWrite(pinCrank,LOW);delay(2000);
+  //digitalWrite(pinLidOpenValve, HIGH);delay(2000);digitalWrite(pinLidOpenValve,LOW);delay(2000);
+  //digitalWrite(pinLidCloseValve, HIGH);delay(2000);digitalWrite(pinLidCloseValve,LOW);delay(2000);
+  digitalWrite(pinHeadRaiseValve, HIGH);delay(2000);digitalWrite(pinHeadRaiseValve,LOW);delay(2000);
+  digitalWrite(pinHeadLowerValve, HIGH);delay(2000);digitalWrite(pinHeadLowerValve,LOW);delay(2000);
+}
