@@ -56,8 +56,7 @@ const int ELKms = 200; // ELK-120 only needs a momentary contact
 
 void setup()
 {
-  SetupProp();
-  
+  SetupProp();  
   if(diag == 1)
   {
     Serial.begin(9600);
@@ -71,9 +70,6 @@ void setup()
 
 void loop()
 {
-
-
-
   if(state == idle && isPropTriggered() == true){StartProp();}
   if(state == triggered){PlayMusic();}
   if(state == musicfinished){OpenLid();}
@@ -84,9 +80,6 @@ void loop()
   
   // don't go back to idle state until trigger turned off, otherwise will loop continuously.
   if(state == lidclosed && isPropTriggered() == false){EndProp();}
-      
-
-  
 }
 
 void StartLaugh()
@@ -223,7 +216,7 @@ void SetupProp()
 void RecoverProp()
 {
   // recovery procedure if power failed, check current positions and initiate closure
-  // if head is not all the way down, open lid and set status to laughingfinished
+  // if head is not all the way down, set status to laughingfinished
   
   if(isLidClosed() != true)
   {
@@ -288,8 +281,7 @@ boolean isLidOpen()
 }
 
 boolean isPropTriggered()
-{
-  
+{  
   if(analogRead(pinTrigger) < AnalogTrigger + AnalogTriggerPrecision && analogRead(pinTrigger) > AnalogTrigger - AnalogTriggerPrecision)
   {
     return true;
@@ -298,17 +290,6 @@ boolean isPropTriggered()
   {
     return false;
   }
-}
-
-void TestRelays()
-{
-  //digitalWrite(pinSound1, HIGH);delay(2000);digitalWrite(pinSound1,LOW);delay(2000);
-  //digitalWrite(pinSound2, HIGH);delay(2000);digitalWrite(pinSound2,LOW);delay(2000);
-  //digitalWrite(pinCrank, HIGH);delay(2000);digitalWrite(pinCrank,LOW);delay(2000);
-  //digitalWrite(pinLidOpenValve, HIGH);delay(2000);digitalWrite(pinLidOpenValve,LOW);delay(2000);
-  //digitalWrite(pinLidCloseValve, HIGH);delay(2000);digitalWrite(pinLidCloseValve,LOW);delay(2000);
-  digitalWrite(pinHeadRaiseValve, HIGH);delay(2000);digitalWrite(pinHeadRaiseValve,LOW);delay(2000);
-  digitalWrite(pinHeadLowerValve, HIGH);delay(2000);digitalWrite(pinHeadLowerValve,LOW);delay(2000);
 }
 
 void DisplayStatus()
