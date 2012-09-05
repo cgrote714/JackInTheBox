@@ -24,7 +24,7 @@ const int pinHeadUp = 0;
 // Analog ranges for position sensors.  
 // Zero = no position reading - not near mag reed
 // Important! Precision must be less than half of difference between high and low thresholds.
-const int AnalogTrigger = 128;
+const int AnalogTrigger = 767;
 const int AnalogTriggerPrecision = 10;
 const int AnalogHeadDown = 732;
 const int AnalogHeadUp = 696;
@@ -51,7 +51,7 @@ const int lidclosed = 130;
 
 // Misc.
 int state;
-const int diag = 0; //change to 1 to output state to serial with each change
+const int diag = 1; //change to 1 to output state to serial with each change
 const int ELKms = 200; // ELK-120 only needs a momentary contact
 
 void setup()
@@ -61,7 +61,7 @@ void setup()
   if(diag == 1)
   {
     Serial.begin(9600);
-    //TestRelays();
+    DisplayStatus();
   }
   else
   {
@@ -72,29 +72,20 @@ void setup()
 void loop()
 {
 
-  if(diag == 1)
-  {
-    Serial.print("Head Down: ");Serial.print(analogRead(pinHeadDown));
-    Serial.print("Head Up: ");Serial.print(analogRead(pinHeadUp));
-    Serial.print("Lid Closed: ");Serial.print(analogRead(pinLidClosed));
-    Serial.print("Lid Open: ");Serial.print(analogRead(pinLidOpen));
-    Serial.print("Trigger: ");Serial.println(analogRead(pinTrigger));
-    delay(2000);
-  }
-  else
-  {
-    if(state == idle && diag == 0 && isPropTriggered() == true){StartProp();}
-    if(state == triggered){PlayMusic();}
-    if(state == musicfinished){OpenLid();}
-    if(state == lidopen){RaiseHead();}
-    if(state == headraised){StartLaugh();}
-    if(state == laughingfinished){LowerHead();}
-    if(state == headlowered){CloseLid();}
-    
-    // don't go back to idle state until trigger turned off, otherwise will loop continuously.
-    if(state == lidclosed && isPropTriggered() == false){EndProp();}
-        
-  }
+
+
+  if(state == idle && isPropTriggered() == true){StartProp();}
+  if(state == triggered){PlayMusic();}
+  if(state == musicfinished){OpenLid();}
+  if(state == lidopen){RaiseHead();}
+  if(state == headraised){StartLaugh();}
+  if(state == laughingfinished){LowerHead();}
+  if(state == headlowered){CloseLid();}
+  
+  // don't go back to idle state until trigger turned off, otherwise will loop continuously.
+  if(state == lidclosed && isPropTriggered() == false){EndProp();}
+      
+
   
 }
 
@@ -195,18 +186,19 @@ void PlayMusic()
   delay(ELKms); 
   digitalWrite(pinSound1, LOW);
   
-  delay(4300); // set to length of sound #1
+  delay(6000); // set to length of sound #1
   
   digitalWrite(pinCrank, LOW);
   ChangeStatus(musicfinished);
   
-  if(isPropTriggered == false){ChangeStatus(lidclosed);} //early abort
+  if(isPropTriggered() == false){ChangeStatus(lidclosed);} //early abort
 }
 
 void ChangeStatus(int newstatus)
 {
   state = newstatus;
-  if(diag == 1){Serial.print("State changed to ");Serial.println(state);} 
+  if(diag == 1){Serial.print("State changed to ");Serial.println(state);DisplayStatus();} 
+
 }
 
 void SetupProp()
@@ -249,46 +241,62 @@ void RecoverProp()
 
 boolean isHeadUp()
 {
-  return false;
   if (analogRead(pinHeadUp) < AnalogHeadUp + AnalogHeadPrecision && analogRead(pinHeadUp) > AnalogHeadUp - AnalogHeadPrecision)
   {
     return true;
+  }
+  else
+  {
+    return false;
   }
 }
 
 boolean isHeadDown()
 {
-  return false;
   if (analogRead(pinHeadDown) < AnalogHeadDown + AnalogHeadPrecision && analogRead(pinHeadDown) > AnalogHeadDown - AnalogHeadPrecision)
   {
     return true;
+  }
+  else
+  {
+    return false;
   }
 }
 
 boolean isLidClosed()
 {
-  return false;
   if (analogRead(pinLidClosed) < AnalogLidClosed + AnalogLidPrecision && analogRead(pinLidClosed) > AnalogLidClosed - AnalogLidPrecision)
   {
     return true; 
+  }
+  else
+  {
+    return false;
   }
 }
 
 boolean isLidOpen()
 {
-  return false;
   if (analogRead(pinLidOpen) < AnalogLidOpen + AnalogLidPrecision && analogRead(pinLidOpen) > AnalogLidOpen - AnalogLidPrecision)
   {
     return true; 
+  }
+  else
+  {
+    return false;
   }
 }
 
 boolean isPropTriggered()
 {
-  return false;
+  
   if(analogRead(pinTrigger) < AnalogTrigger + AnalogTriggerPrecision && analogRead(pinTrigger) > AnalogTrigger - AnalogTriggerPrecision)
   {
     return true;
+  }
+  else
+  {
+    return false;
   }
 }
 
@@ -302,3 +310,14 @@ void TestRelays()
   digitalWrite(pinHeadRaiseValve, HIGH);delay(2000);digitalWrite(pinHeadRaiseValve,LOW);delay(2000);
   digitalWrite(pinHeadLowerValve, HIGH);delay(2000);digitalWrite(pinHeadLowerValve,LOW);delay(2000);
 }
+
+void DisplayStatus()
+{
+    Serial.print("State: ");Serial.print(state);
+    Serial.print(" Head Down: ");Serial.print(analogRead(pinHeadDown));
+    Serial.print(" Head Up: ");Serial.print(analogRead(pinHeadUp));
+    Serial.print(" Lid Closed: ");Serial.print(analogRead(pinLidClosed));
+    Serial.print(" Lid Open: ");Serial.print(analogRead(pinLidOpen));
+    Serial.print(" Trigger: ");Serial.println(analogRead(pinTrigger));
+}
+
