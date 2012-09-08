@@ -54,7 +54,6 @@ int state;
 const int diag = 1; //set to 1 to enable diagnostic mode
 const int ELKms = 200; // ELK-120 only needs a momentary contact
 const int Sound1ms = 3528; // Duration of Sound #1
-const int Sound2ms = 6000; // Duration of Sound #2
 
 void setup()
 {
@@ -211,6 +210,7 @@ void SetupProp()
   pinMode(pinHeadRaiseValve, OUTPUT);
   pinMode(pinHeadLowerValve, OUTPUT); 
   
+  digitalWrite(pinSpot, LOW);
   digitalWrite(pinCrank, LOW);
   digitalWrite(pinSound1, LOW);
   digitalWrite(pinSound2, LOW);
