@@ -51,8 +51,10 @@ const int lidclosed = 130;
 
 // Misc.
 int state;
-const int diag = 1; //change to 1 to output state to serial with each change
+const int diag = 1; //set to 1 to enable diagnostic mode
 const int ELKms = 200; // ELK-120 only needs a momentary contact
+const int Sound1ms = 3528; // Duration of Sound #1
+const int Sound2ms = 6000; // Duration of Sound #2
 
 void setup()
 {
@@ -89,29 +91,30 @@ void StartLaugh()
   delay(ELKms);
   digitalWrite(pinSound2, LOW);
     
-  delay(700);
+  delay(700); //initial delay for sound to start playing
+  
   mouthServo.writeMicroseconds(mouthopenUS);
-  delay(400);
+  delay(334);
   mouthServo.writeMicroseconds(mouthclosedUS);
   
-  delay(700);
+  delay(349);
   mouthServo.writeMicroseconds(mouthopenUS);
-  delay(400);
+  delay(338);
   mouthServo.writeMicroseconds(mouthclosedUS);
 
-  delay(700);
+  delay(262);
   mouthServo.writeMicroseconds(mouthopenUS);
-  delay(400);
+  delay(154);
   mouthServo.writeMicroseconds(mouthclosedUS);
 
-  delay(700);
+  delay(182);
   mouthServo.writeMicroseconds(mouthopenUS);
-  delay(400);
+  delay(466);
   mouthServo.writeMicroseconds(mouthclosedUS);
 
-  delay(700);
+  delay(326);
   mouthServo.writeMicroseconds(mouthopenUS);
-  delay(400);
+  delay(499);
   mouthServo.writeMicroseconds(mouthclosedUS);
 
   delay(3000); //final delay to keep head up 
@@ -179,7 +182,7 @@ void PlayMusic()
   delay(ELKms); 
   digitalWrite(pinSound1, LOW);
   
-  delay(6000); // set to length of sound #1
+  delay(Sound1ms-ELKms); 
   
   digitalWrite(pinCrank, LOW);
   ChangeStatus(musicfinished);
