@@ -26,11 +26,11 @@ const int pinHeadUp = 0;
 // Important! Precision must be less than half of difference between high and low thresholds.
 const int AnalogTrigger = 767;
 const int AnalogTriggerPrecision = 10;
-const int AnalogHeadDown = 732;
-const int AnalogHeadUp = 696;
+const int AnalogHeadDown = 696;
+const int AnalogHeadUp = 733;
 const int AnalogHeadPrecision = 10;
-const int AnalogLidOpen = 608;
-const int AnalogLidClosed = 656;
+const int AnalogLidOpen = 0;
+const int AnalogLidClosed = 200;
 const int AnalogLidPrecision = 20;
 
 // Status values
@@ -50,7 +50,7 @@ const int lidclosing = 120;
 const int lidclosed = 130;
 
 // Misc.
-int state;
+int state = 130; //don't start in idle state - make sure trigger is false
 const int diag = 1; //set to 1 to enable diagnostic mode
 const int ELKms = 200; // ELK-120 only needs a momentary contact
 const int Sound1ms = 3528; // Duration of Sound #1
@@ -72,6 +72,7 @@ void setup()
 void loop()
 {
   if(state == idle && isPropTriggered() == true){StartProp();}
+  if(state == idle && isPropTriggered() == false && diag == 1){DisplayStatus();delay(500);}
   if(state == triggered){PlayMusic();}
   if(state == musicfinished){OpenLid();}
   if(state == lidopen){RaiseHead();}
