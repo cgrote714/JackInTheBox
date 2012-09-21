@@ -33,6 +33,12 @@ const int AnalogLidOpen = 0;
 const int AnalogLidClosed = 200;
 const int AnalogLidPrecision = 20;
 
+// when to turn UV spots off
+const int beforeHeadDown = 1 //this might be the best so visitors don't see prop when it is resetting
+const int afterLidClosed = 10
+const int afterTriggerOff = 100
+int lightsoff = beforeHeadDown
+
 // Status values
 const int idle = 0;
 const int triggered = 10;
@@ -120,6 +126,7 @@ void StartLaugh()
   delay(3000); //final delay to keep head up 
 
   ChangeStatus(laughingfinished);  
+  
 }
 
 void StartProp()
@@ -130,12 +137,13 @@ void StartProp()
 
 void EndProp()
 {
-  digitalWrite(pinSpot, LOW);
+  if(lightsoff == afterTriggerOff){digitalWrite(pinSpot, LOW);}
   ChangeStatus(idle);
 }
 
 void LowerHead()
 {
+  if(lightsoff == beforeHeadDown){digitalWrite(pinSpot, LOW);}
   ChangeStatus(headlowering);
   digitalWrite(pinHeadRaiseValve, LOW); 
   digitalWrite(pinHeadLowerValve, HIGH); 
@@ -159,6 +167,7 @@ void CloseLid()
   digitalWrite(pinLidCloseValve, HIGH);
   while(isLidClosed() == false){delay(10);}
   digitalWrite(pinLidCloseValve, LOW);
+  if(lightsoff == afterLidClosed){digitalWrite(pinSpot, LOW);}
   
   delay(5000); // delay for tank recharging before next trigger
   
