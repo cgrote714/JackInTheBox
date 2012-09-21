@@ -34,10 +34,10 @@ const int AnalogLidClosed = 200;
 const int AnalogLidPrecision = 20;
 
 // when to turn UV spots off
-const int beforeHeadDown = 1 //this might be the best so visitors don't see prop when it is resetting
-const int afterLidClosed = 10
-const int afterTriggerOff = 100
-int lightsoff = beforeHeadDown
+const int beforeHeadDown = 1; //might be best so visitors don't see prop while it resets
+const int afterLidClosed = 10;
+const int afterTriggerOff = 100;
+int lightsoff = beforeHeadDown;
 
 // Status values
 const int idle = 0;
