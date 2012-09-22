@@ -58,7 +58,7 @@ const int lidclosed = 130;
 // Misc.
 int state = lidclosed; //don't start in idle state - make sure trigger is false
 const int diag = 1; //set to 1 to enable diagnostic mode
-const int ELKms = 200; // ELK-120 only needs a momentary contact
+const int ELKms = 500; // ELK-120 only needs a momentary contact
 const int Sound1ms = 3528; // Duration of Sound #1
 
 void setup()
@@ -67,7 +67,7 @@ void setup()
   if(diag == 1)
   {
     Serial.begin(9600);
-    DisplayStatus();
+    DisplayStatus(); 
   }
   else
   {
@@ -76,6 +76,11 @@ void setup()
 }
 
 void loop()
+{
+  proploop();
+}
+
+void proploop()
 {
   if(state == idle && isPropTriggered() == true){StartProp();}
   if(state == idle && isPropTriggered() == false && diag == 1){DisplayStatus();delay(500);}
@@ -87,7 +92,7 @@ void loop()
   if(state == headlowered){CloseLid();}
   
   // don't go back to idle state until trigger turned off, otherwise will loop continuously.
-  if(state == lidclosed && isPropTriggered() == false){EndProp();}
+  if(state == lidclosed && isPropTriggered() == false){EndProp();} 
 }
 
 void StartLaugh()
@@ -186,11 +191,10 @@ void OpenLid()
 void PlayMusic()
 {
   ChangeStatus(musicplaying);
-  digitalWrite(pinCrank, HIGH);
   digitalWrite(pinSound1, HIGH);
   delay(ELKms); 
   digitalWrite(pinSound1, LOW);
-  
+  digitalWrite(pinCrank, HIGH); //give sound a chance to start before starting crank
   delay(Sound1ms-ELKms); 
   
   digitalWrite(pinCrank, LOW);
