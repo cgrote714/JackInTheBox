@@ -7,8 +7,8 @@ const int mouthopenUS = 400;
 Servo mouthServo;
 
 // PIN Assignments
-const int pinSpot = 3;
-const int pinSound1 = 4;
+const int pinSpot = 4;
+const int pinSound1 = 3;
 const int pinSound2 = 5;
 const int pinCrank = 6;
 const int pinLidOpenValve = 7;
@@ -56,7 +56,7 @@ const int lidclosing = 120;
 const int lidclosed = 130;
 
 // Misc.
-int state = 130; //don't start in idle state - make sure trigger is false
+int state = lidclosed; //don't start in idle state - make sure trigger is false
 const int diag = 1; //set to 1 to enable diagnostic mode
 const int ELKms = 200; // ELK-120 only needs a momentary contact
 const int Sound1ms = 3528; // Duration of Sound #1
@@ -137,7 +137,7 @@ void StartProp()
 
 void EndProp()
 {
-  if(lightsoff == afterTriggerOff){digitalWrite(pinSpot, LOW);}
+  digitalWrite(pinSpot, LOW); // end prop always turns off the light.
   ChangeStatus(idle);
 }
 
