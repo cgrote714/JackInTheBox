@@ -12,13 +12,8 @@ const int pinSound1 = 3;
 const int pinSound2 = 5;
 const int pinCrank = 6;
 const int pinLidOpenValve = 9;
-<<<<<<< HEAD
-const int pinLidCloseValve = 10;
-const int pinHeadRaiseValve = 7;
-=======
 const int pinLidCloseValve = 7;
 const int pinHeadRaiseValve = 10;
->>>>>>> Pulse lid open to avoid flapping
 const int pinHeadLowerValve = 8;
 const int pinTrigger = 3;
 const int pinLidClosed = 2;
@@ -157,7 +152,7 @@ void LowerHead()
   ChangeStatus(headlowering);
   digitalWrite(pinHeadRaiseValve, LOW); 
   digitalWrite(pinHeadLowerValve, HIGH); 
-  while(isHeadDown() == false){delay(10);} 
+  while(isHeadDown() == false){DisplayStatus();} 
   digitalWrite(pinHeadLowerValve, LOW); 
   ChangeStatus(headlowered);
 }
@@ -166,7 +161,7 @@ void RaiseHead()
 {
   ChangeStatus(headrising);
   digitalWrite(pinHeadRaiseValve, HIGH); 
-  while(isHeadUp() == false){delay(10);}
+  while(isHeadUp() == false){DisplayStatus();}
   ChangeStatus(headraised);
 }
 
