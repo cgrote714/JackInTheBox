@@ -12,8 +12,13 @@ const int pinSound1 = 3;
 const int pinSound2 = 5;
 const int pinCrank = 6;
 const int pinLidOpenValve = 9;
+<<<<<<< HEAD
 const int pinLidCloseValve = 10;
 const int pinHeadRaiseValve = 7;
+=======
+const int pinLidCloseValve = 7;
+const int pinHeadRaiseValve = 10;
+>>>>>>> Pulse lid open to avoid flapping
 const int pinHeadLowerValve = 8;
 const int pinTrigger = 3;
 const int pinLidClosed = 2;
@@ -29,7 +34,7 @@ const int AnalogTriggerPrecision = 10;
 const int AnalogHeadDown = 696;
 const int AnalogHeadUp = 733;
 const int AnalogHeadPrecision = 10;
-const int AnalogLidOpen = 0;
+const int AnalogLidOpen = 500;
 const int AnalogLidClosed = 200;
 const int AnalogLidPrecision = 20;
 
@@ -83,7 +88,7 @@ void loop()
 void proploop()
 {
   if(state == idle && isPropTriggered() == true){StartProp();}
-  if(state == idle && isPropTriggered() == false && diag == 1){DisplayStatus();delay(500);}
+  if(state == idle && isPropTriggered() == false && diag == 1){DisplayStatus();}
   if(state == triggered){PlayMusic();}
   if(state == musicfinished){OpenLid();}
   if(state == lidopen){RaiseHead();}
@@ -170,7 +175,7 @@ void CloseLid()
   ChangeStatus(lidclosing);
   digitalWrite(pinLidOpenValve, LOW);
   digitalWrite(pinLidCloseValve, HIGH);
-  while(isLidClosed() == false){delay(10);}
+  while(isLidClosed() == false){DisplayStatus();}
   digitalWrite(pinLidCloseValve, LOW);
   if(lightsoff == afterLidClosed){digitalWrite(pinSpot, LOW);}
   
@@ -182,10 +187,16 @@ void CloseLid()
 void OpenLid()
 {
   ChangeStatus(lidopening);
-  digitalWrite(pinLidOpenValve, HIGH);
-  while(isLidOpen() == false){delay(10);}
-  ChangeStatus(lidopen);
   
+  //pulse lid valve to absorb momentum and prevent harsh flapping
+  digitalWrite(pinLidOpenValve, HIGH);
+  delay(700);
+  digitalWrite(pinLidOpenValve, LOW);
+  delay(500);
+  digitalWrite(pinLidOpenValve,HIGH);
+
+  while(isLidOpen() == false){DisplayStatus();}
+  ChangeStatus(lidopen);
 }
 
 void PlayMusic()
@@ -207,7 +218,6 @@ void ChangeStatus(int newstatus)
 {
   state = newstatus;
   if(diag == 1){Serial.print("State changed to ");Serial.println(state);DisplayStatus();} 
-
 }
 
 void SetupProp()
@@ -228,6 +238,8 @@ void SetupProp()
   digitalWrite(pinCrank, LOW);
   digitalWrite(pinSound1, LOW);
   digitalWrite(pinSound2, LOW);
+  
+  state = lidclosed;
 }
 
 void RecoverProp()
@@ -311,11 +323,15 @@ boolean isPropTriggered()
 
 void DisplayStatus()
 {
+  if(diag == 1)
+  {
     Serial.print("State: ");Serial.print(state);
     Serial.print(" Head Down: ");Serial.print(analogRead(pinHeadDown));
     Serial.print(" Head Up: ");Serial.print(analogRead(pinHeadUp));
     Serial.print(" Lid Closed: ");Serial.print(analogRead(pinLidClosed));
     Serial.print(" Lid Open: ");Serial.print(analogRead(pinLidOpen));
     Serial.print(" Trigger: ");Serial.println(analogRead(pinTrigger));
+    delay(1000);
+  }
 }
 
