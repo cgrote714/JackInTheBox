@@ -6,7 +6,7 @@ const int mouthclosedUS = 1000;
 const int mouthopenUS = 400;
 Servo mouthServo;
 
-// PIN Assignments
+// Output pin assignments
 const int pinSpot = 4;
 const int pinSound1 = 3;
 const int pinSound2 = 5;
@@ -15,23 +15,28 @@ const int pinLidOpenValve = 9;
 const int pinLidCloseValve = 7;
 const int pinHeadRaiseValve = 10;
 const int pinHeadLowerValve = 8;
+
+// Input pin assignments
+// Note: Down and Up for same cylinder should be different pins to prevent driftover triggering
 const int pinTrigger = 3;
-const int pinLidClosed = 2;
+const int pinLidClosed = 1;
 const int pinLidOpen = 1;
-const int pinHeadDown = 0;
-const int pinHeadUp = 0;
+const int pinHeadDown = 0; 
+const int pinHeadUp = 0; 
 
 // Analog ranges for position sensors.  
 // Zero = no position reading - not near mag reed
-// Important! Precision must be less than half of difference between high and low thresholds.
-const int AnalogTrigger = 767;
+// Important! Precision must be less than half of difference between high and 
+// low thresholds if down and up are read from same pin.
+const int AnalogTriggerOff = 0;
+const int AnalogTriggerOn = 767;
 const int AnalogTriggerPrecision = 10;
 const int AnalogHeadDown = 696;
 const int AnalogHeadUp = 733;
 const int AnalogHeadPrecision = 10;
-const int AnalogLidOpen = 500;
-const int AnalogLidClosed = 200;
-const int AnalogLidPrecision = 20;
+const int AnalogLidOpen = 510;
+const int AnalogLidClosed = 465;
+const int AnalogLidPrecision = 5;
 
 // when to turn UV spots off
 const int beforeHeadDown = 1; //might be best so visitors don't see prop while it resets
@@ -56,23 +61,23 @@ const int lidclosing = 120;
 const int lidclosed = 130;
 
 // Misc.
-int state = lidclosed; //don't start in idle state - make sure trigger is false
-const int diag = 1; //set to 1 to enable diagnostic mode
+int state = -1; //don't start in idle state - make sure trigger is false
+const int diag = 0; //set to 1 to enable diagnostic mode
 const int ELKms = 500; // ELK-120 only needs a momentary contact
 const int Sound1ms = 3528; // Duration of Sound #1
 
 void setup()
 {
   SetupProp();  
+  
   if(diag == 1)
   {
     Serial.begin(9600);
     DisplayStatus(); 
   }
-  else
-  {
-    RecoverProp();
-  }
+
+  RecoverProp();
+
 }
 
 void loop()
@@ -82,8 +87,8 @@ void loop()
 
 void proploop()
 {
-  if(state == idle && isPropTriggered() == true){StartProp();}
-  if(state == idle && isPropTriggered() == false && diag == 1){DisplayStatus();}
+  if(state == idle && isTriggerOn() == true){StartProp();}
+  if(state == idle && isTriggerOff() == true && diag == 1){DisplayStatus();}
   if(state == triggered){PlayMusic();}
   if(state == musicfinished){OpenLid();}
   if(state == lidopen){RaiseHead();}
@@ -92,7 +97,7 @@ void proploop()
   if(state == headlowered){CloseLid();}
   
   // don't go back to idle state until trigger turned off, otherwise will loop continuously.
-  if(state == lidclosed && isPropTriggered() == false){EndProp();} 
+  if(state == lidclosed && isTriggerOff() == true){EndProp();} 
 }
 
 void StartLaugh()
@@ -171,6 +176,7 @@ void CloseLid()
   digitalWrite(pinLidOpenValve, LOW);
   digitalWrite(pinLidCloseValve, HIGH);
   while(isLidClosed() == false){DisplayStatus();}
+  delay(1000);
   digitalWrite(pinLidCloseValve, LOW);
   if(lightsoff == afterLidClosed){digitalWrite(pinSpot, LOW);}
   
@@ -191,6 +197,7 @@ void OpenLid()
   digitalWrite(pinLidOpenValve,HIGH);
 
   while(isLidOpen() == false){DisplayStatus();}
+  delay(1000);
   ChangeStatus(lidopen);
 }
 
@@ -206,7 +213,7 @@ void PlayMusic()
   digitalWrite(pinCrank, LOW);
   ChangeStatus(musicfinished);
   
-  if(isPropTriggered() == false){ChangeStatus(lidclosed);} //early abort
+  if(isTriggerOff() == true){ChangeStatus(lidclosed);} //early abort
 }
 
 void ChangeStatus(int newstatus)
@@ -233,8 +240,7 @@ void SetupProp()
   digitalWrite(pinCrank, LOW);
   digitalWrite(pinSound1, LOW);
   digitalWrite(pinSound2, LOW);
-  
-  state = lidclosed;
+
 }
 
 void RecoverProp()
@@ -258,7 +264,8 @@ void RecoverProp()
 
 boolean isHeadUp()
 {
-  if (analogRead(pinHeadUp) < AnalogHeadUp + AnalogHeadPrecision && analogRead(pinHeadUp) > AnalogHeadUp - AnalogHeadPrecision)
+  int pa = aaread(pinHeadUp,5,10); //pin average
+  if (pa < AnalogHeadUp + AnalogHeadPrecision && pa > AnalogHeadUp - AnalogHeadPrecision)
   {
     return true;
   }
@@ -270,7 +277,8 @@ boolean isHeadUp()
 
 boolean isHeadDown()
 {
-  if (analogRead(pinHeadDown) < AnalogHeadDown + AnalogHeadPrecision && analogRead(pinHeadDown) > AnalogHeadDown - AnalogHeadPrecision)
+  int pa = aaread(pinHeadDown,5,10); //pin average
+  if (pa < AnalogHeadDown + AnalogHeadPrecision && pa > AnalogHeadDown - AnalogHeadPrecision)
   {
     return true;
   }
@@ -282,7 +290,8 @@ boolean isHeadDown()
 
 boolean isLidClosed()
 {
-  if (analogRead(pinLidClosed) < AnalogLidClosed + AnalogLidPrecision && analogRead(pinLidClosed) > AnalogLidClosed - AnalogLidPrecision)
+  int pa = aaread(pinLidClosed,10,10); //pin average
+  if (pa < AnalogLidClosed + AnalogLidPrecision && pa > AnalogLidClosed - AnalogLidPrecision)
   {
     return true; 
   }
@@ -294,7 +303,8 @@ boolean isLidClosed()
 
 boolean isLidOpen()
 {
-  if (analogRead(pinLidOpen) < AnalogLidOpen + AnalogLidPrecision && analogRead(pinLidOpen) > AnalogLidOpen - AnalogLidPrecision)
+  int pa = aaread(pinLidOpen,5,10); //pin average
+  if (pa < AnalogLidOpen + AnalogLidPrecision && pa > AnalogLidOpen - AnalogLidPrecision)
   {
     return true; 
   }
@@ -304,9 +314,23 @@ boolean isLidOpen()
   }
 }
 
-boolean isPropTriggered()
-{  
-  if(analogRead(pinTrigger) < AnalogTrigger + AnalogTriggerPrecision && analogRead(pinTrigger) > AnalogTrigger - AnalogTriggerPrecision)
+boolean isTriggerOn()
+{ 
+  int pa = aaread(pinTrigger,5,5); //pin average
+  if(pa < AnalogTriggerOn + AnalogTriggerPrecision && pa > AnalogTriggerOn - AnalogTriggerPrecision)
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
+
+boolean isTriggerOff()
+{ 
+  int pa = aaread(pinTrigger,5,5); //pin average
+  if(pa < AnalogTriggerOff + AnalogTriggerPrecision && pa > AnalogTriggerOff - AnalogTriggerPrecision)
   {
     return true;
   }
@@ -326,7 +350,23 @@ void DisplayStatus()
     Serial.print(" Lid Closed: ");Serial.print(analogRead(pinLidClosed));
     Serial.print(" Lid Open: ");Serial.print(analogRead(pinLidOpen));
     Serial.print(" Trigger: ");Serial.println(analogRead(pinTrigger));
-    delay(1000);
+    delay(100);
   }
 }
 
+int aaread(int aPin, int nTimes, int msDelay)
+{
+  //returns analog pin average reading
+  //reads pin nTimes with msDelay between each reading
+  
+  int pa = analogRead(aPin); 
+  delay(msDelay);
+  
+  for (int i=2; i <= nTimes; i++)
+  {
+    pa += analogRead(aPin);
+    delay(msDelay);
+  }
+
+  return pa / nTimes;
+}
