@@ -264,8 +264,10 @@ void RecoverProp()
 
 boolean isHeadUp()
 {
-  int pa = aaread(pinHeadUp,5,10); //pin average
-  if (pa < AnalogHeadUp + AnalogHeadPrecision && pa > AnalogHeadUp - AnalogHeadPrecision)
+  //int pa = aaread(pinHeadUp,5,10); //pin average
+  //if (pa < AnalogHeadUp + AnalogHeadPrecision && pa > AnalogHeadUp - AnalogHeadPrecision)
+  if(StableRead(pinHeadUp, AnalogHeadUp - AnalogHeadPrecision, AnalogHeadUp + AnalogHeadPrecision,
+    10, 5))
   {
     return true;
   }
@@ -277,8 +279,10 @@ boolean isHeadUp()
 
 boolean isHeadDown()
 {
-  int pa = aaread(pinHeadDown,5,10); //pin average
-  if (pa < AnalogHeadDown + AnalogHeadPrecision && pa > AnalogHeadDown - AnalogHeadPrecision)
+  //int pa = aaread(pinHeadDown,5,10); //pin average
+  //if (pa < AnalogHeadDown + AnalogHeadPrecision && pa > AnalogHeadDown - AnalogHeadPrecision)
+  if(StableRead(pinHeadDown, AnalogHeadDown - AnalogHeadPrecision, AnalogHeadDown + AnalogHeadPrecision,
+    10, 5))
   {
     return true;
   }
@@ -290,8 +294,10 @@ boolean isHeadDown()
 
 boolean isLidClosed()
 {
-  int pa = aaread(pinLidClosed,10,10); //pin average
-  if (pa < AnalogLidClosed + AnalogLidPrecision && pa > AnalogLidClosed - AnalogLidPrecision)
+  //int pa = aaread(pinLidClosed,10,10); //pin average
+  //if (pa < AnalogLidClosed + AnalogLidPrecision && pa > AnalogLidClosed - AnalogLidPrecision)
+  if(StableRead(pinLidClosed, AnalogLidClosed - AnalogLidPrecision, AnalogLidClosed + AnalogLidPrecision,
+    10, 5))
   {
     return true; 
   }
@@ -303,8 +309,10 @@ boolean isLidClosed()
 
 boolean isLidOpen()
 {
-  int pa = aaread(pinLidOpen,5,10); //pin average
-  if (pa < AnalogLidOpen + AnalogLidPrecision && pa > AnalogLidOpen - AnalogLidPrecision)
+  //int pa = aaread(pinLidOpen,5,10); //pin average
+  //if (pa < AnalogLidOpen + AnalogLidPrecision && pa > AnalogLidOpen - AnalogLidPrecision)
+  if(StableRead(pinLidOpen, AnalogLidOpen - AnalogLidPrecision, AnalogLidOpen + AnalogLidPrecision,
+    10, 5))
   {
     return true; 
   }
@@ -316,8 +324,10 @@ boolean isLidOpen()
 
 boolean isTriggerOn()
 { 
-  int pa = aaread(pinTrigger,5,5); //pin average
-  if(pa < AnalogTriggerOn + AnalogTriggerPrecision && pa > AnalogTriggerOn - AnalogTriggerPrecision)
+  //int pa = aaread(pinTrigger,5,5); //pin average
+  //if(pa < AnalogTriggerOn + AnalogTriggerPrecision && pa > AnalogTriggerOn - AnalogTriggerPrecision)
+  if(StableRead(pinTrigger, AnalogTriggerOn - AnalogTriggerPrecision, AnalogTriggerOn + AnalogTriggerPrecision,
+    10, 5))
   {
     return true;
   }
@@ -329,8 +339,10 @@ boolean isTriggerOn()
 
 boolean isTriggerOff()
 { 
-  int pa = aaread(pinTrigger,5,5); //pin average
-  if(pa < AnalogTriggerOff + AnalogTriggerPrecision && pa > AnalogTriggerOff - AnalogTriggerPrecision)
+  //int pa = aaread(pinTrigger,5,5); //pin average
+  //if(pa < AnalogTriggerOff + AnalogTriggerPrecision && pa > AnalogTriggerOff - AnalogTriggerPrecision)
+  if(StableRead(pinTrigger, AnalogTriggerOff - AnalogTriggerPrecision, AnalogTriggerOff + AnalogTriggerPrecision,
+    10, 5))
   {
     return true;
   }
@@ -370,3 +382,27 @@ int aaread(int aPin, int nTimes, int msDelay)
 
   return pa / nTimes;
 }
+
+boolean StableRead(int aPin, int iFrom, int iTo, int nTimes, int msDelay)
+{
+  //ensures sensor reading is consistent nTimes with msDelay retest delay
+  int pa = 0; 
+  if(analogRead(aPin) <= iTo && analogRead(aPin) >= iFrom){pa++;}
+  delay(msDelay);
+  
+  for (int i=2; i <= nTimes; i++)
+  {
+    if(analogRead(aPin) <= iTo && analogRead(aPin) >= iFrom){pa++;}
+    delay(msDelay);
+  }
+
+  if(pa == nTimes)
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
+
