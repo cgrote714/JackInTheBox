@@ -35,14 +35,14 @@ const int AnalogHeadDown = 696;
 const int AnalogHeadUp = 733;
 const int AnalogHeadPrecision = 10;
 const int AnalogLidOpen = 510;
-const int AnalogLidClosed = 465;
+const int AnalogLidClosed = 472;
 const int AnalogLidPrecision = 5;
 
 // when to turn UV spots off
 const int beforeHeadDown = 1; //might be best so visitors don't see prop while it resets
 const int afterLidClosed = 10;
 const int afterTriggerOff = 100;
-int lightsoff = beforeHeadDown;
+const int lightsoff = beforeHeadDown;
 
 // Status values
 const int idle = 0;
@@ -62,13 +62,17 @@ const int lidclosed = 130;
 
 // Misc.
 int state = -1; //don't start in idle state - make sure trigger is false
-const int diag = 0; //set to 1 to enable diagnostic mode
+int diag = 0; //set to 1 to enable diagnostic mode
 const int ELKms = 500; // ELK-120 only needs a momentary contact
 const int Sound1ms = 3528; // Duration of Sound #1
 
 void setup()
 {
   SetupProp();  
+  
+  delay(6000); //don't rush power up
+  //diag mode can be enabled by leaving insteon in ON position while powering up prop.
+  if(isTriggerOn()==true){diag=1;}
   
   if(diag == 1)
   {
@@ -88,7 +92,7 @@ void loop()
 void proploop()
 {
   if(state == idle && isTriggerOn() == true){StartProp();}
-  if(state == idle && isTriggerOff() == true && diag == 1){DisplayStatus();}
+  if(diag == 1){DisplayStatus();}
   if(state == triggered){PlayMusic();}
   if(state == musicfinished){OpenLid();}
   if(state == lidopen){RaiseHead();}
@@ -141,7 +145,7 @@ void StartLaugh()
 
 void StartProp()
 {
-  digitalWrite(pinSpot, HIGH);
+  
   ChangeStatus(triggered);
 }
 
@@ -176,7 +180,7 @@ void CloseLid()
   digitalWrite(pinLidOpenValve, LOW);
   digitalWrite(pinLidCloseValve, HIGH);
   while(isLidClosed() == false){DisplayStatus();}
-  delay(1000);
+  delay(1000); //remove this once lid closed reed switch is set up
   digitalWrite(pinLidCloseValve, LOW);
   if(lightsoff == afterLidClosed){digitalWrite(pinSpot, LOW);}
   
@@ -207,7 +211,12 @@ void PlayMusic()
   digitalWrite(pinSound1, HIGH);
   delay(ELKms); 
   digitalWrite(pinSound1, LOW);
-  digitalWrite(pinCrank, HIGH); //give sound a chance to start before starting crank
+  
+  //give sound a chance to start before turning on light and starting crank
+  digitalWrite(pinSpot, HIGH);
+  digitalWrite(pinCrank, HIGH); 
+  
+  //wait for sound to finish playing
   delay(Sound1ms-ELKms); 
   
   digitalWrite(pinCrank, LOW);
@@ -219,6 +228,13 @@ void PlayMusic()
 void ChangeStatus(int newstatus)
 {
   state = newstatus;
+  
+  //Update LCD line 1
+  //if(state == idle){Serial.print("Idle");}
+  //etc.
+  
+  //Clear LCD line 2
+  
   if(diag == 1){Serial.print("State changed to ");Serial.println(state);DisplayStatus();} 
 }
 
@@ -352,6 +368,19 @@ boolean isTriggerOff()
   }
 }
 
+void Wait(int msDelay)
+{
+  int time_start = millis();
+  // Update LCD Line 2
+  // Delay XXXXX ms
+  // 1234567890123456
+  while(millis() < time_start + msDelay)
+  {
+    // Update LCD line 2, position 7-11 with countdown?
+    delay(10); //LCD refresh rate 
+  }  
+}
+
 void DisplayStatus()
 {
   if(diag == 1)
@@ -362,7 +391,7 @@ void DisplayStatus()
     Serial.print(" Lid Closed: ");Serial.print(analogRead(pinLidClosed));
     Serial.print(" Lid Open: ");Serial.print(analogRead(pinLidOpen));
     Serial.print(" Trigger: ");Serial.println(analogRead(pinTrigger));
-    delay(100);
+    //delay(100);
   }
 }
 
@@ -386,6 +415,10 @@ int aaread(int aPin, int nTimes, int msDelay)
 boolean StableRead(int aPin, int iFrom, int iTo, int nTimes, int msDelay)
 {
   //ensures sensor reading is consistent nTimes with msDelay retest delay
+  
+  // update LCD line 2 with what read is looking for 
+  // Wait XXX<YYY<ZZZ
+  // 1234567890123456
   int pa = 0; 
   if(analogRead(aPin) <= iTo && analogRead(aPin) >= iFrom){pa++;}
   delay(msDelay);
@@ -393,6 +426,7 @@ boolean StableRead(int aPin, int iFrom, int iTo, int nTimes, int msDelay)
   for (int i=2; i <= nTimes; i++)
   {
     if(analogRead(aPin) <= iTo && analogRead(aPin) >= iFrom){pa++;}
+    // update LCD line 2
     delay(msDelay);
   }
 
