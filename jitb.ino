@@ -19,7 +19,7 @@ const int pinHeadLowerValve = 8;
 // Input pin assignments
 // Note: Down and Up for same cylinder should be different pins to prevent driftover triggering
 const int pinTrigger = 3;
-const int pinLidClosed = 1;
+const int pinLidClosed = 2;
 const int pinLidOpen = 1;
 const int pinHeadDown = 0; 
 const int pinHeadUp = 0; 
@@ -35,7 +35,7 @@ const int AnalogHeadDown = 696;
 const int AnalogHeadUp = 733;
 const int AnalogHeadPrecision = 10;
 const int AnalogLidOpen = 510;
-const int AnalogLidClosed = 472;
+const int AnalogLidClosed = 608;
 const int AnalogLidPrecision = 5;
 
 // when to turn UV spots off
@@ -45,7 +45,8 @@ const int afterTriggerOff = 100;
 const int lightsoff = beforeHeadDown;
 
 // Status values
-const int idle = 0;
+const int startup = 0;
+const int idle = 5;
 const int triggered = 10;
 const int musicplaying = 20;
 const int musicfinished = 30;
@@ -61,7 +62,7 @@ const int lidclosing = 120;
 const int lidclosed = 130;
 
 // Misc.
-int state = -1; //don't start in idle state - make sure trigger is false
+int state = startup; //don't start in idle state - make sure trigger is false
 int diag = 0; //set to 1 to enable diagnostic mode
 const int ELKms = 500; // ELK-120 only needs a momentary contact
 const int Sound1ms = 3528; // Duration of Sound #1
@@ -71,7 +72,8 @@ void setup()
   SetupProp();  
   
   delay(6000); //don't rush power up
-  //diag mode can be enabled by leaving insteon in ON position while powering up prop.
+  // this allows insteon to be turned on for linking with remotes
+  // diag mode can be enabled by leaving insteon in ON position while powering up prop.
   if(isTriggerOn()==true){diag=1;}
   
   if(diag == 1)
@@ -92,7 +94,7 @@ void loop()
 void proploop()
 {
   if(state == idle && isTriggerOn() == true){StartProp();}
-  if(diag == 1){DisplayStatus();}
+  if(diag == 1){DisplayStatus();delay(100);}
   if(state == triggered){PlayMusic();}
   if(state == musicfinished){OpenLid();}
   if(state == lidopen){RaiseHead();}
@@ -180,7 +182,7 @@ void CloseLid()
   digitalWrite(pinLidOpenValve, LOW);
   digitalWrite(pinLidCloseValve, HIGH);
   while(isLidClosed() == false){DisplayStatus();}
-  delay(1000); //remove this once lid closed reed switch is set up
+  delay(200); 
   digitalWrite(pinLidCloseValve, LOW);
   if(lightsoff == afterLidClosed){digitalWrite(pinSpot, LOW);}
   
@@ -197,7 +199,7 @@ void OpenLid()
   digitalWrite(pinLidOpenValve, HIGH);
   delay(700);
   digitalWrite(pinLidOpenValve, LOW);
-  delay(500);
+  delay(300);
   digitalWrite(pinLidOpenValve,HIGH);
 
   while(isLidOpen() == false){DisplayStatus();}
@@ -343,7 +345,7 @@ boolean isTriggerOn()
   //int pa = aaread(pinTrigger,5,5); //pin average
   //if(pa < AnalogTriggerOn + AnalogTriggerPrecision && pa > AnalogTriggerOn - AnalogTriggerPrecision)
   if(StableRead(pinTrigger, AnalogTriggerOn - AnalogTriggerPrecision, AnalogTriggerOn + AnalogTriggerPrecision,
-    10, 5))
+    5, 5))
   {
     return true;
   }
