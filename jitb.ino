@@ -67,6 +67,14 @@ int diag = 0; //set to 1 to enable diagnostic mode
 const int ELKms = 500; // ELK-120 only needs a momentary contact
 const int Sound1ms = 3528; // Duration of Sound #1
 
+void mouthtest()
+{
+  mouthServo.attach(pinMouthServo);
+  CloseMouth();
+  StartLaugh();
+  mouthServo.detach();
+}
+
 void setup()
 {
   SetupProp();  
@@ -115,34 +123,46 @@ void StartLaugh()
     
   delay(700); //initial delay for sound to start playing
   
-  mouthServo.writeMicroseconds(mouthopenUS);
+  OpenMouth();
   delay(334);
-  mouthServo.writeMicroseconds(mouthclosedUS);
+  CloseMouth();
   
   delay(349);
-  mouthServo.writeMicroseconds(mouthopenUS);
+  OpenMouth();
   delay(338);
-  mouthServo.writeMicroseconds(mouthclosedUS);
+  CloseMouth();
 
   delay(262);
-  mouthServo.writeMicroseconds(mouthopenUS);
+  OpenMouth();
   delay(154);
-  mouthServo.writeMicroseconds(mouthclosedUS);
+  CloseMouth();
 
   delay(182);
-  mouthServo.writeMicroseconds(mouthopenUS);
+  OpenMouth();
   delay(466);
-  mouthServo.writeMicroseconds(mouthclosedUS);
+  CloseMouth();
 
   delay(326);
-  mouthServo.writeMicroseconds(mouthopenUS);
+  OpenMouth();
   delay(499);
-  mouthServo.writeMicroseconds(mouthclosedUS);
+  CloseMouth();
 
   delay(3000); //final delay to keep head up 
 
   ChangeStatus(laughingfinished);  
   
+}
+
+void CloseMouth()
+{
+  mouthServo.write(0);
+  //mouthServo.writeMicroseconds(mouthclosedUS); 
+}
+
+void OpenMouth()
+{
+  mouthServo.write(160);
+  //mouthServo.writeMicroseconds(mouthopenUS);
 }
 
 void StartProp()
@@ -165,12 +185,15 @@ void LowerHead()
   digitalWrite(pinHeadLowerValve, HIGH); 
   while(isHeadDown() == false){DisplayStatus();} 
   digitalWrite(pinHeadLowerValve, LOW); 
+  mouthServo.detach();
   ChangeStatus(headlowered);
 }
 
 void RaiseHead()
 {
   ChangeStatus(headrising);
+  mouthServo.attach(pinMouthServo);
+  CloseMouth();
   digitalWrite(pinHeadRaiseValve, HIGH); 
   while(isHeadUp() == false){DisplayStatus();}
   ChangeStatus(headraised);
