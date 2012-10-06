@@ -30,7 +30,7 @@ const int pinHeadUp = 0;
 // low thresholds if down and up are read from same pin.
 const int AnalogTriggerOff = 0;
 const int AnalogTriggerOn = 767;
-const int AnalogTriggerPrecision = 10;
+const int AnalogTriggerPrecision = 30;
 const int AnalogHeadDown = 696;
 const int AnalogHeadUp = 733;
 const int AnalogHeadPrecision = 10;
@@ -62,6 +62,7 @@ const int lidclosing = 120;
 const int lidclosed = 130;
 
 // Misc.
+unsigned long timestamp;
 int state = startup; //don't start in idle state - make sure trigger is false
 int diag = 0; //set to 1 to enable diagnostic mode
 const int ELKms = 500; // ELK-120 only needs a momentary contact
@@ -124,30 +125,30 @@ void StartLaugh()
   delay(700); //initial delay for sound to start playing
   
   OpenMouth();
-  delay(334);
+  delay(235);
   CloseMouth();
   
-  delay(349);
+  delay(246);
   OpenMouth();
-  delay(338);
+  delay(322);
   CloseMouth();
 
-  delay(262);
+  delay(118);
   OpenMouth();
-  delay(154);
+  delay(138);
   CloseMouth();
 
-  delay(182);
+  delay(150);
   OpenMouth();
-  delay(466);
+  delay(378);
   CloseMouth();
 
-  delay(326);
+  delay(198);
   OpenMouth();
-  delay(499);
+  delay(346);
   CloseMouth();
 
-  delay(3000); //final delay to keep head up 
+  delay(2000); //final delay to keep head up 
 
   ChangeStatus(laughingfinished);  
   
@@ -196,6 +197,7 @@ void RaiseHead()
   CloseMouth();
   digitalWrite(pinHeadRaiseValve, HIGH); 
   while(isHeadUp() == false){DisplayStatus();}
+  if(diag == 1){while(isTriggerOn()==true){delay(10);}} //hold head up during diag mode
   ChangeStatus(headraised);
 }
 
@@ -225,8 +227,25 @@ void OpenLid()
   delay(300);
   digitalWrite(pinLidOpenValve,HIGH);
 
-  while(isLidOpen() == false){DisplayStatus();}
-  delay(1000);
+  timestamp = millis();
+  while(isLidOpen() == false)
+  {
+    DisplayStatus();
+    if(abs(millis()-timestamp)>2000 && 1==0) //disabled for now, was not a stuck valve issue
+    {
+      //reset stuck valve
+      digitalWrite(pinLidOpenValve, LOW);
+      delay(300);
+      //retry
+      timestamp = millis();
+      digitalWrite(pinLidOpenValve, HIGH);
+      delay(700);
+      digitalWrite(pinLidOpenValve, LOW);
+      delay(300);
+      digitalWrite(pinLidOpenValve,HIGH); 
+    }
+  }
+  delay(500);
   ChangeStatus(lidopen);
 }
 
@@ -265,8 +284,8 @@ void ChangeStatus(int newstatus)
 
 void SetupProp()
 {
-  mouthServo.attach(pinMouthServo);
-  mouthServo.writeMicroseconds(mouthclosedUS);
+  //mouthServo.attach(pinMouthServo);
+  //mouthServo.writeMicroseconds(mouthclosedUS);
   
   pinMode(pinSpot, OUTPUT);
   pinMode(pinCrank, OUTPUT);
@@ -288,19 +307,19 @@ void RecoverProp()
 {
   // recovery procedure if power failed, check current positions and initiate closure
   // if head is not all the way down, set status to laughingfinished
+
+  digitalWrite(pinHeadRaiseValve, LOW);
+  digitalWrite(pinHeadLowerValve, LOW);
   
-  if(isLidClosed() != true)
-  {
-    ChangeStatus(laughingfinished);
-  }
-  else
-  {
-    digitalWrite(pinLidOpenValve, LOW);
-    digitalWrite(pinLidCloseValve, LOW);
-    digitalWrite(pinHeadRaiseValve, LOW);
-    digitalWrite(pinHeadLowerValve, LOW);
-    ChangeStatus(lidclosed);
-  }
+  while(isHeadDown() != true){DisplayStatus();} //someone may be working inside the prop
+  
+  digitalWrite(pinLidOpenValve, LOW);
+  digitalWrite(pinLidCloseValve, LOW);
+
+  while(isLidClosed() != true){DisplayStatus();} //someone may be working inside the prop
+
+  ChangeStatus(lidclosed);
+
 }
 
 boolean isHeadUp()
@@ -383,7 +402,7 @@ boolean isTriggerOff()
   //int pa = aaread(pinTrigger,5,5); //pin average
   //if(pa < AnalogTriggerOff + AnalogTriggerPrecision && pa > AnalogTriggerOff - AnalogTriggerPrecision)
   if(StableRead(pinTrigger, AnalogTriggerOff - AnalogTriggerPrecision, AnalogTriggerOff + AnalogTriggerPrecision,
-    10, 5))
+    10, 10))
   {
     return true;
   }
@@ -419,24 +438,7 @@ void DisplayStatus()
     //delay(100);
   }
 }
-
-int aaread(int aPin, int nTimes, int msDelay)
-{
-  //returns analog pin average reading
-  //reads pin nTimes with msDelay between each reading
-  
-  int pa = analogRead(aPin); 
-  delay(msDelay);
-  
-  for (int i=2; i <= nTimes; i++)
-  {
-    pa += analogRead(aPin);
-    delay(msDelay);
-  }
-
-  return pa / nTimes;
-}
-
+s
 boolean StableRead(int aPin, int iFrom, int iTo, int nTimes, int msDelay)
 {
   //ensures sensor reading is consistent nTimes with msDelay retest delay
