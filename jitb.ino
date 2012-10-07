@@ -119,14 +119,16 @@ void StartLaugh()
 {
   ChangeStatus(laughing);
   digitalWrite(pinSound2, HIGH);  
-  delay(ELKms);
-  digitalWrite(pinSound2, LOW);
+  //delay(ELKms);
+  //digitalWrite(pinSound2, LOW);
     
-  delay(700); //initial delay for sound to start playing
+  delay(400); //initial delay for sound to start playing
   
   OpenMouth();
   delay(235);
   CloseMouth();
+  
+  digitalWrite(pinSound2, LOW);
   
   delay(246);
   OpenMouth();
@@ -197,8 +199,19 @@ void RaiseHead()
   CloseMouth();
   digitalWrite(pinHeadRaiseValve, HIGH); 
   while(isHeadUp() == false){DisplayStatus();}
-  if(diag == 1){while(isTriggerOn()==true){delay(10);}} //hold head up during diag mode
   ChangeStatus(headraised);
+  
+  if(diag == 1 && isTriggerOn()==true)
+  {
+    //hold head up during diag mode for maintenance inside box
+    mouthServo.detach();  
+    while(isTriggerOn()==true){delay(10);}
+    mouthServo.attach(pinMouthServo);
+    CloseMouth();
+    ChangeStatus(laughingfinished);
+  } 
+  
+  
 }
 
 void CloseLid()
@@ -438,7 +451,7 @@ void DisplayStatus()
     //delay(100);
   }
 }
-s
+
 boolean StableRead(int aPin, int iFrom, int iTo, int nTimes, int msDelay)
 {
   //ensures sensor reading is consistent nTimes with msDelay retest delay
