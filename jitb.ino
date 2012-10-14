@@ -64,7 +64,7 @@ const int lidclosed = 130;
 // Misc.
 unsigned long timestamp;
 int state = startup; //don't start in idle state - make sure trigger is false
-int diag = 0; //set to 1 to enable diagnostic mode
+const int diag = 0; //set to 1 to enable diagnostic mode
 const int ELKms = 500; // ELK-120 only needs a momentary contact
 const int Sound1ms = 3528; // Duration of Sound #1
 
@@ -73,6 +73,9 @@ void mouthtest()
   mouthServo.attach(pinMouthServo);
   CloseMouth();
   StartLaugh();
+  //delay(1000);
+  //OpenMouth();
+  //delay(1000);
   mouthServo.detach();
 }
 
@@ -80,10 +83,10 @@ void setup()
 {
   SetupProp();  
   
-  delay(6000); //don't rush power up
+  //delay(6000); //don't rush power up
   // this allows insteon to be turned on for linking with remotes
   // diag mode can be enabled by leaving insteon in ON position while powering up prop.
-  if(isTriggerOn()==true){diag=1;}
+  //if(isTriggerOn()==true){diag=1;}
   
   if(diag == 1)
   {
@@ -103,7 +106,6 @@ void loop()
 void proploop()
 {
   if(state == idle && isTriggerOn() == true){StartProp();}
-  if(diag == 1){DisplayStatus();delay(100);}
   if(state == triggered){PlayMusic();}
   if(state == musicfinished){OpenLid();}
   if(state == lidopen){RaiseHead();}
@@ -154,11 +156,20 @@ void StartLaugh()
 
   ChangeStatus(laughingfinished);  
   
+  if(diag == 1 && isTriggerOn()==true)
+  {
+    //hold head up during diag mode for maintenance inside box
+    mouthServo.detach();  
+    while(isTriggerOn()==true){delay(10);}
+    mouthServo.attach(pinMouthServo);
+    CloseMouth();
+  } 
+  
 }
 
 void CloseMouth()
 {
-  mouthServo.write(0);
+  mouthServo.write(10);
   //mouthServo.writeMicroseconds(mouthclosedUS); 
 }
 
@@ -200,18 +211,6 @@ void RaiseHead()
   digitalWrite(pinHeadRaiseValve, HIGH); 
   while(isHeadUp() == false){DisplayStatus();}
   ChangeStatus(headraised);
-  
-  if(diag == 1 && isTriggerOn()==true)
-  {
-    //hold head up during diag mode for maintenance inside box
-    mouthServo.detach();  
-    while(isTriggerOn()==true){delay(10);}
-    mouthServo.attach(pinMouthServo);
-    CloseMouth();
-    ChangeStatus(laughingfinished);
-  } 
-  
-  
 }
 
 void CloseLid()
@@ -235,9 +234,9 @@ void OpenLid()
   
   //pulse lid valve to absorb momentum and prevent harsh flapping
   digitalWrite(pinLidOpenValve, HIGH);
-  delay(700);
+  delay(710);
   digitalWrite(pinLidOpenValve, LOW);
-  delay(300);
+  delay(290);
   digitalWrite(pinLidOpenValve,HIGH);
 
   timestamp = millis();
@@ -297,8 +296,7 @@ void ChangeStatus(int newstatus)
 
 void SetupProp()
 {
-  //mouthServo.attach(pinMouthServo);
-  //mouthServo.writeMicroseconds(mouthclosedUS);
+  mouthServo.attach(pinMouthServo); //prevents random servo movement
   
   pinMode(pinSpot, OUTPUT);
   pinMode(pinCrank, OUTPUT);
