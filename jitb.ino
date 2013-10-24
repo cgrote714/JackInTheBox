@@ -149,7 +149,7 @@ void StartLaugh()
 
   delay(198);
   OpenMouth();
-  delay(346);
+  delay(446);  //346
   CloseMouth();
 
   delay(2000); //final delay to keep head up 
@@ -240,10 +240,10 @@ void OpenLid()
   digitalWrite(pinLidOpenValve,HIGH);
 
   timestamp = millis();
-  while(isLidOpen() == false)
+  while(true == false)
   {
     DisplayStatus();
-    if(abs(millis()-timestamp)>2000 && 1==0) //disabled for now, was not a stuck valve issue
+    if(abs(millis()-timestamp)>2000 && 1==1) //disabled for now, was not a stuck valve issue
     {
       //reset stuck valve
       digitalWrite(pinLidOpenValve, LOW);
@@ -251,13 +251,13 @@ void OpenLid()
       //retry
       timestamp = millis();
       digitalWrite(pinLidOpenValve, HIGH);
-      delay(700);
+      delay(710);
       digitalWrite(pinLidOpenValve, LOW);
-      delay(300);
+      delay(290);
       digitalWrite(pinLidOpenValve,HIGH); 
     }
   }
-  delay(500);
+  delay(1000);
   ChangeStatus(lidopen);
 }
 
@@ -278,7 +278,7 @@ void PlayMusic()
   digitalWrite(pinCrank, LOW);
   ChangeStatus(musicfinished);
   
-  if(isTriggerOff() == true){ChangeStatus(lidclosed);} //early abort
+  //if(isTriggerOff() == true){ChangeStatus(lidclosed);} //early abort
 }
 
 void ChangeStatus(int newstatus)
